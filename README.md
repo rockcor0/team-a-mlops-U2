@@ -2,6 +2,11 @@
 
 **Asignatura:** Electiva III — MLOps Engineering (Maestría en Inteligencia Artificial Aplicada)  
 
+**Integrantes:**
+- David Valencia
+- Alonso Arbelaez
+- Ricardo Delgado
+
 ---
 
 ## 1. Finalidad del Proyecto y de la Solución
@@ -20,12 +25,19 @@ team-a-mlops-U2/
 ├── README.md                # Entregable Punto 2: Documentación de uso, construcción y pruebas
 ├── Dockerfile               # Definición de la imagen personalizada de Docker
 ├── requirements.txt         # Dependencias de Python (Flask)
+├── requirements-dev.txt     # Dependencias de desarrollo (pytest)
+├── pytest.ini               # Configuración de pytest
 ├── model.py                 # Función del modelo simulado (retorna los 5 estados clínicos)
 ├── estadisticas.py          # Registro de cada predicción y reporte de estadísticas
 ├── app.py                   # Servicio Flask con interfaz web (/) y endpoints API (/predecir, /estadisticas)
 ├── test_servicio.py         # Suite de validación automatizada de los 5 estados y endpoints
-└── templates/
-    └── index.html           # Página web interactiva para el médico
+├── tests/
+│   └── test_modelo.py       # Pruebas unitarias con pytest
+├── templates/
+│   └── index.html           # Página web interactiva para el médico
+└── .github/
+    └── workflows/
+        └── workflow.yaml    # Pipeline de CI/CD con GitHub Actions
 ```
 
 ---
@@ -247,3 +259,46 @@ Cuando se desee finalizar el servicio:
 docker stop contenedor-medico
 docker rm contenedor-medico
 ```
+
+---
+
+## 8. Pruebas Unitarias
+
+Las pruebas unitarias (`tests/test_modelo.py`) usan **pytest** y verifican que:
+
+1. Distintos grupos de parámetros de entrada producen las **5 categorías** del modelo.
+2. Antes de cualquier predicción, `GET /estadisticas` retorna los **valores por defecto** (conteos en 0, sin predicciones y sin fecha).
+3. Después de una predicción, la **última predicción** de las estadísticas es la esperada.
+
+Cada prueba usa su propio archivo de estadísticas temporal, por lo que no modifican los datos reales.
+
+Para correrlas localmente:
+
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -r requirements-dev.txt
+pytest -v
+```
+
+---
+
+## 9. Pipeline de CI/CD con GitHub Actions
+
+El pipeline está definido en `.github/workflows/workflow.yaml`. La rama `main` está protegida, por lo que los cambios solo ingresan mediante pull requests.
+
+| Evento | Tareas |
+| :--- | :--- |
+| **Pull request contra `main`** | 1. Comenta en el PR: *"CI/CD en acción. Ejecutando tareas …"*.<br>2. Corre las pruebas unitarias.<br>3. Si pasan, comenta en el PR: *"CI/CD terminado con éxito."*. |
+| **Commit en `main`** (merge de un PR) | 1. Vuelve a correr las pruebas unitarias.<br>2. Si pasan, construye la imagen de Docker y la publica en GitHub Packages (`ghcr.io`). |
+
+### Usar la imagen publicada
+
+La imagen publicada en GitHub Packages se puede descargar y ejecutar sin construirla localmente:
+
+```bash
+docker pull ghcr.io/rockcor0/team-a-mlops-u2:latest
+docker run -d -p 5000:5000 --name contenedor-medico ghcr.io/rockcor0/team-a-mlops-u2:latest
+```
+
+Además de `latest`, cada imagen se etiqueta con el SHA corto del commit de `main` que la generó (por ejemplo, `sha-1a2b3c4`).
