@@ -3,7 +3,8 @@ FROM python:3.11-slim
 
 # 2. Variables de entorno para optimizar la ejecución de Python en contenedores
 ENV PYTHONDONTWRITEBYTECODE=1 \
-    PYTHONUNBUFFERED=1
+    PYTHONUNBUFFERED=1 \
+    RUTA_ESTADISTICAS=/app/data/predicciones.jsonl
 
 # 3. Definir el directorio de trabajo dentro del contenedor
 WORKDIR /app
@@ -15,8 +16,11 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 # 6. Copiar el código fuente de la aplicación, las pruebas y la interfaz web al contenedor
-COPY model.py app.py test_servicio.py ./
+COPY model.py estadisticas.py app.py test_servicio.py ./
 COPY templates/ ./templates/
+
+# 6.1. Directorio donde se exportan las predicciones para el reporte de estadísticas
+RUN mkdir -p /app/data
 
 # 7. Ejecutar validación automatizada de los 4 estados clínicos durante el build
 RUN python test_servicio.py

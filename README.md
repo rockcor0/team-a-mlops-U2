@@ -21,7 +21,8 @@ team-a-mlops-U2/
 ├── Dockerfile               # Definición de la imagen personalizada de Docker
 ├── requirements.txt         # Dependencias de Python (Flask)
 ├── model.py                 # Función del modelo simulado (retorna los 5 estados clínicos)
-├── app.py                   # Servicio Flask con interfaz web (/) y endpoint API (/predecir)
+├── estadisticas.py          # Registro de cada predicción y reporte de estadísticas
+├── app.py                   # Servicio Flask con interfaz web (/) y endpoints API (/predecir, /estadisticas)
 ├── test_servicio.py         # Suite de validación automatizada de los 5 estados y endpoints
 └── templates/
     └── index.html           # Página web interactiva para el médico
@@ -85,6 +86,12 @@ docker run -d -p 5000:5000 --name contenedor-medico servicio-medico-ml:1.0
 ```
 
 *(Nota para usuarios de macOS: si el puerto `5000` está ocupado por AirPlay Receiver, puede mapearse cualquier otro puerto local, por ejemplo `-p 5050:5000`, accediendo a `http://localhost:5050`).*
+
+Para conservar las estadísticas de predicciones aunque el contenedor se elimine, se puede montar un volumen en `/app/data`:
+
+```bash
+docker run -d -p 5000:5000 -v "$(pwd)/data:/app/data" --name contenedor-medico servicio-medico-ml:1.0
+```
 
 Para comprobar que el contenedor está corriendo:
 
@@ -187,7 +194,52 @@ También se puede consultar directamente desde la barra de direcciones del naveg
 
 ---
 
-## 6. Detener y Eliminar el Contenedor
+## 6. Reporte de Estadísticas de las Predicciones (`GET /estadisticas`)
+
+Cada predicción realizada (desde la interfaz web o desde `/predecir`) se exporta como una línea JSON en el archivo `/app/data/predicciones.jsonl` del contenedor (configurable con la variable de entorno `RUTA_ESTADISTICAS`). Las peticiones con datos inválidos no se registran.
+
+El reporte se obtiene en el navegador (también hay un enlace en la interfaz web) o con `curl`:
+
+```bash
+curl http://localhost:5000/estadisticas
+```
+
+**Respuesta esperada:**
+```json
+{
+  "fecha_ultima_prediccion": "2026-11-19T20:14:38-05:00",
+  "predicciones_por_categoria": {
+    "ENFERMEDAD AGUDA": 1,
+    "ENFERMEDAD CRÓNICA": 0,
+    "ENFERMEDAD LEVE": 0,
+    "ENFERMEDAD TERMINAL": 1,
+    "NO ENFERMO": 0
+  },
+  "total_predicciones": 2,
+  "ultimas_predicciones": [
+    {
+      "estado": "ENFERMEDAD TERMINAL",
+      "fecha": "2026-11-19T20:14:38-05:00",
+      "parametros": {"biomarcador_anormal": 1, "duracion_dias": 120, "severidad_dolor": 9, "temperatura": 37.0}
+    },
+    {
+      "estado": "ENFERMEDAD AGUDA",
+      "fecha": "2026-11-19T20:14:38-05:00",
+      "parametros": {"biomarcador_anormal": 1, "duracion_dias": 4, "severidad_dolor": 8, "temperatura": 39.1}
+    }
+  ]
+}
+```
+
+| Campo | Descripción |
+| :--- | :--- |
+| `predicciones_por_categoria` | Número total de predicciones por cada una de las 5 categorías. |
+| `ultimas_predicciones` | Últimas 5 predicciones realizadas, de la más reciente a la más antigua. |
+| `fecha_ultima_prediccion` | Fecha y hora de la última predicción (`null` si aún no hay predicciones). |
+
+---
+
+## 7. Detener y Eliminar el Contenedor
 
 Cuando se desee finalizar el servicio:
 

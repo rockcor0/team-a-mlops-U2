@@ -6,12 +6,14 @@ Puntos finales (Endpoints) disponibles:
     - POST /         : Procesa el formulario web y muestra el estado en pantalla.
     - GET /predecir  : Permite obtener predicción mediante parámetros en la URL.
     - POST /predecir : Permite obtener predicción enviando un JSON o lista de valores.
+    - GET /estadisticas : Reporte de estadísticas de las predicciones realizadas.
     - GET /health    : Verifica que el contenedor Docker está activo y saludable.
 """
 
 import os
 from flask import Flask, request, jsonify, render_template
 from model import predecir_estado_paciente, predecir_desde_coleccion
+from estadisticas import registrar_prediccion, obtener_estadisticas
 
 app = Flask(__name__)
 
@@ -65,6 +67,7 @@ def index():
         }
         try:
             resultado = extraer_y_predecir(valores_form)
+            registrar_prediccion(resultado)
         except Exception as exc:
             error = str(exc)
 
@@ -95,12 +98,22 @@ def predecir():
         else:
             resultado = extraer_y_predecir(datos)
 
+        registrar_prediccion(resultado)
         return jsonify(resultado), 200
 
     except (ValueError, TypeError, KeyError) as err:
         return jsonify({"error": str(err)}), 400
     except Exception as err:
         return jsonify({"error": f"Error interno procesando la solicitud: {str(err)}"}), 500
+
+
+@app.route("/estadisticas", methods=["GET"])
+def estadisticas():
+    """
+    Endpoint de reporte para los médicos: total de predicciones por categoría,
+    últimas 5 predicciones y fecha de la última predicción.
+    """
+    return jsonify(obtener_estadisticas()), 200
 
 
 @app.route("/health", methods=["GET"])
