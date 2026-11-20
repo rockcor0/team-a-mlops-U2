@@ -22,7 +22,7 @@ permissions:
 
 jobs:
   comentar-inicio:
-    name: Comentar inicio en el PR
+    name: Inicio pipeline
     if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     permissions:
@@ -64,7 +64,7 @@ jobs:
         run: pytest -v
 
   comentar-fin:
-    name: Comentar fin en el PR
+    name: Fin pipeline
     needs: pruebas
     if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
@@ -84,7 +84,7 @@ jobs:
             });
 
   publicar-imagen:
-    name: Construir y publicar imagen de Docker
+    name: Desplegar en Docker
     needs: pruebas
     if: github.event_name == 'push'
     runs-on: ubuntu-latest
