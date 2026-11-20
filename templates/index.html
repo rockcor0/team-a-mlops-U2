@@ -169,6 +169,7 @@
                 <button type="button" class="preset-btn" onclick="cargarCaso(37.6, 3, 4, 0)">2. ENFERMEDAD LEVE</button>
                 <button type="button" class="preset-btn" onclick="cargarCaso(39.1, 4, 8, 1)">3. ENFERMEDAD AGUDA</button>
                 <button type="button" class="preset-btn" onclick="cargarCaso(37.4, 45, 5, 1)">4. ENFERMEDAD CRÓNICA</button>
+                <button type="button" class="preset-btn" onclick="cargarCaso(37.0, 120, 9, 1)">5. ENFERMEDAD TERMINAL</button>
             </div>
         </div>
 
@@ -183,7 +184,7 @@
                 <div class="form-group">
                     <label for="duracion_dias">2. Duración de Síntomas (Días)</label>
                     <input type="number" min="0" id="duracion_dias" name="duracion_dias" value="{{ valores.duracion_dias }}" required>
-                    <small class="hint">Agudo/Leve: &lt; 14 días | Crónico: &ge; 30 días</small>
+                    <small class="hint">Agudo/Leve: &lt; 14 días | Crónico: &ge; 30 días | Terminal: &ge; 60 días</small>
                 </div>
 
                 <div class="form-group">

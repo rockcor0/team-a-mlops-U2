@@ -3,11 +3,12 @@ Módulo de simulación del modelo de Machine Learning para clasificación clíni
 
 Este módulo implementa la función requerida en el Punto 2 del taller, capaz de
 recibir al menos 3 parámetros clínicos de síntomas de un paciente y retornar
-alguno de los 4 estados posibles definidos en el enunciado:
+alguno de los 5 estados posibles definidos en el enunciado:
     - NO ENFERMO
     - ENFERMEDAD LEVE
     - ENFERMEDAD AGUDA
     - ENFERMEDAD CRÓNICA
+    - ENFERMEDAD TERMINAL
 """
 
 from typing import Dict, Any, Union
@@ -18,6 +19,7 @@ ESTADO_NO_ENFERMO = "NO ENFERMO"
 ESTADO_LEVE = "ENFERMEDAD LEVE"
 ESTADO_AGUDA = "ENFERMEDAD AGUDA"
 ESTADO_CRONICA = "ENFERMEDAD CRÓNICA"
+ESTADO_TERMINAL = "ENFERMEDAD TERMINAL"
 
 
 def predecir_estado_paciente(
@@ -67,7 +69,18 @@ def predecir_estado_paciente(
             "ni alteraciones en biomarcadores."
         )
 
-    # 2. Caso: ENFERMEDAD CRÓNICA
+    # 2. Caso: ENFERMEDAD TERMINAL
+    # Evolución muy prolongada (>= 60 días), dolor muy severo (>= 9) y
+    # biomarcador anormal. Se evalúa antes que CRÓNICA porque también la cumple.
+    elif duracion_dias >= 60 and severidad_dolor >= 9 and biomarcador_anormal == 1:
+        estado = ESTADO_TERMINAL
+        justificacion = (
+            "Enfermedad de larga evolución con dolor muy severo y biomarcador "
+            "alterado, compatible con una fase avanzada. Se sugiere valoración "
+            "por cuidados paliativos y manejo especializado."
+        )
+
+    # 3. Caso: ENFERMEDAD CRÓNICA
     # Síntomas persistentes por 30 días o más, o evolución >= 14 días acompañada
     # de biomarcador anormal (patrón frecuente en enfermedades crónicas o huérfanas).
     elif duracion_dias >= 30 or (duracion_dias >= 14 and biomarcador_anormal == 1):
@@ -78,7 +91,7 @@ def predecir_estado_paciente(
             "patología crónica o enfermedad huérfana."
         )
 
-    # 3. Caso: ENFERMEDAD AGUDA
+    # 4. Caso: ENFERMEDAD AGUDA
     # Fiebre alta (>= 38.5 °C), dolor severo (>= 7) o biomarcador alterado
     # en un cuadro de aparición reciente (< 30 días).
     elif (
@@ -93,7 +106,7 @@ def predecir_estado_paciente(
             "Requiere atención médica prioritaria."
         )
 
-    # 4. Caso: ENFERMEDAD LEVE
+    # 5. Caso: ENFERMEDAD LEVE
     # Síntomas leves o moderados de corta duración sin signos de alarma.
     else:
         estado = ESTADO_LEVE

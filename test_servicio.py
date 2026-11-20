@@ -2,11 +2,12 @@
 Script de validación técnica del modelo y de los endpoints del servicio Flask.
 
 Verifica:
-1. Que la función `predecir_estado_paciente` retorne los 4 estados requeridos:
+1. Que la función `predecir_estado_paciente` retorne los 5 estados requeridos:
    - NO ENFERMO
    - ENFERMEDAD LEVE
    - ENFERMEDAD AGUDA
    - ENFERMEDAD CRÓNICA
+   - ENFERMEDAD TERMINAL
 2. Que el endpoint POST /predecir funcione correctamente con diccionario y lista.
 3. Que el endpoint GET /predecir funcione con parámetros de consulta en la URL.
 4. Que la interfaz web GET / y POST / responda correctamente.
@@ -32,6 +33,10 @@ CASOS_PRUEBA = [
     (
         {"temperatura": 37.4, "duracion_dias": 45, "severidad_dolor": 5, "biomarcador_anormal": 1},
         "ENFERMEDAD CRÓNICA",
+    ),
+    (
+        {"temperatura": 37.0, "duracion_dias": 120, "severidad_dolor": 9, "biomarcador_anormal": 1},
+        "ENFERMEDAD TERMINAL",
     ),
 ]
 
@@ -63,7 +68,7 @@ def ejecutar_pruebas():
     assert r_index.status_code == 200
     print("  [OK] GET / (Formulario Web HTML cargado correctamente)")
 
-    # POST /predecir y GET /predecir para los 4 estados
+    # POST /predecir y GET /predecir para los 5 estados
     for entrada, estado_esperado in CASOS_PRUEBA:
         r_post = client.post("/predecir", json=entrada)
         assert r_post.status_code == 200
@@ -77,7 +82,7 @@ def ejecutar_pruebas():
         assert datos_get["estado"] == estado_esperado
         print(f"  [OK] GET  /predecir -> {datos_get['estado']}")
 
-    print("\nTODAS LAS PRUEBAS PASARON EXITOSAMENTE (4/4 estados validados).")
+    print("\nTODAS LAS PRUEBAS PASARON EXITOSAMENTE (5/5 estados validados).")
 
 
 if __name__ == "__main__":
