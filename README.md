@@ -3,9 +3,9 @@
 **Asignatura:** Electiva III — MLOps Engineering (Maestría en Inteligencia Artificial Aplicada)  
 
 **Integrantes:**
-- David Valencia
-- Alonso Arbelaez
-- Ricardo Delgado
+- David Valencia – davidvalenciaj@gmail.com
+- Alonso Arbeláez – alonsoarbelaez@gmail.com
+- Ricardo Delgado – ridel007@gmail.com
 
 ---
 
