@@ -11,7 +11,17 @@ Verifica:
 2. Que el endpoint POST /predecir funcione correctamente con diccionario y lista.
 3. Que el endpoint GET /predecir funcione con parámetros de consulta en la URL.
 4. Que la interfaz web GET / y POST / responda correctamente.
+5. Que el endpoint GET /estadisticas reporte el conteo por categoría, las
+   últimas 5 predicciones y la fecha de la última predicción.
 """
+
+import os
+import tempfile
+
+# Las pruebas escriben las predicciones en un archivo temporal, para no
+# dejar datos en el archivo real (ni en la imagen de Docker durante el build).
+_directorio_temporal = tempfile.mkdtemp()
+os.environ["RUTA_ESTADISTICAS"] = os.path.join(_directorio_temporal, "predicciones.jsonl")
 
 from model import predecir_estado_paciente, predecir_desde_coleccion
 from app import app
@@ -68,6 +78,17 @@ def ejecutar_pruebas():
     assert r_index.status_code == 200
     print("  [OK] GET / (Formulario Web HTML cargado correctamente)")
 
+    # Estadísticas vacías antes de cualquier predicción
+    r_vacias = client.get("/estadisticas")
+    assert r_vacias.status_code == 200
+    stats_vacias = r_vacias.get_json()
+    assert stats_vacias["total_predicciones"] == 0
+    assert all(c == 0 for c in stats_vacias["predicciones_por_categoria"].values())
+    assert len(stats_vacias["predicciones_por_categoria"]) == 5
+    assert stats_vacias["ultimas_predicciones"] == []
+    assert stats_vacias["fecha_ultima_prediccion"] is None
+    print("  [OK] GET /estadisticas -> vacías antes de predecir")
+
     # POST /predecir y GET /predecir para los 5 estados
     for entrada, estado_esperado in CASOS_PRUEBA:
         r_post = client.post("/predecir", json=entrada)
@@ -81,6 +102,22 @@ def ejecutar_pruebas():
         datos_get = r_get.get_json()
         assert datos_get["estado"] == estado_esperado
         print(f"  [OK] GET  /predecir -> {datos_get['estado']}")
+
+    print("\n=== 4. Probando reporte de estadísticas (GET /estadisticas) ===")
+    stats = client.get("/estadisticas").get_json()
+    # Cada caso se predijo dos veces (POST y GET)
+    assert stats["total_predicciones"] == 2 * len(CASOS_PRUEBA)
+    for _, estado_esperado in CASOS_PRUEBA:
+        assert stats["predicciones_por_categoria"][estado_esperado] == 2
+    print(f"  [OK] Conteo por categoría -> {stats['predicciones_por_categoria']}")
+
+    assert len(stats["ultimas_predicciones"]) == 5
+    ultimo_estado = CASOS_PRUEBA[-1][1]
+    assert stats["ultimas_predicciones"][0]["estado"] == ultimo_estado
+    print(f"  [OK] Última predicción -> {stats['ultimas_predicciones'][0]['estado']}")
+
+    assert stats["fecha_ultima_prediccion"] == stats["ultimas_predicciones"][0]["fecha"]
+    print(f"  [OK] Fecha de la última predicción -> {stats['fecha_ultima_prediccion']}")
 
     print("\nTODAS LAS PRUEBAS PASARON EXITOSAMENTE (5/5 estados validados).")
 

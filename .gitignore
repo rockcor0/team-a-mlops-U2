@@ -66,6 +66,9 @@ db.sqlite3-journal
 instance/
 .webassets-cache
 
+# Predicciones exportadas para el reporte de estadísticas
+data/
+
 # Scrapy stuff:
 .scrapy
 
