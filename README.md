@@ -8,7 +8,7 @@
 
 Este repositorio contiene la solución completa al taller de **Pipeline de MLOps y Contenerización con Docker** para un sistema médico de apoyo al diagnóstico clínico capaz de evaluar síntomas de pacientes tanto para **enfermedades comunes** (abundancia de datos) como para **enfermedades huérfanas** (escasez de datos):
 
-1. **Punto 1 — Diseño del Pipeline de MLOps (`1_Pipeline_MLOps.md`):** Describe el flujo *end-to-end* (Diseño, Desarrollo y Producción/Monitoreo) junto con su diagrama general de arquitectura.
+1. **Punto 1 — Diseño del Pipeline de MLOps:** Describe el flujo *end-to-end* (Diseño, Desarrollo y Producción/Monitoreo) junto con su diagrama general de arquitectura. Se presentó en la Unidad 1 y no forma parte de este repositorio.
 2. **Punto 2 — Servicio Contenerizado en Docker (`Dockerfile`, `model.py`, `app.py`):** Empaqueta un servicio web y API REST en **Python + Flask** dentro de una imagen de Docker para que cualquier médico pueda desplegar el modelo en su propio computador y obtener diagnósticos sin instalar dependencias locales.
 
 ---
@@ -16,13 +16,9 @@ Este repositorio contiene la solución completa al taller de **Pipeline de MLOps
 ## 2. Estructura del Directorio
 
 ```text
-Taller_MLPop_Docker/
-├── 1_Pipeline_MLOps.md      # Entregable Punto 1: Propuesta, etapas e insights del Pipeline de MLOps
-├── mermaid-diagram.pdf      # Entregable Punto 1 (PDF): Diagrama general + insights paso a paso
-├── mermaid-diagram.svg      # Diagrama vectorial original en formato SVG
+team-a-mlops-U2/
 ├── README.md                # Entregable Punto 2: Documentación de uso, construcción y pruebas
 ├── Dockerfile               # Definición de la imagen personalizada de Docker
-├── .dockerignore            # Exclusión de archivos innecesarios en el contexto de Docker
 ├── requirements.txt         # Dependencias de Python (Flask)
 ├── model.py                 # Función del modelo simulado (retorna los 4 estados clínicos)
 ├── app.py                   # Servicio Flask con interfaz web (/) y endpoint API (/predecir)
@@ -62,7 +58,7 @@ Tener **Docker** instalado y en ejecución en el sistema (Docker Desktop en Wind
 Abrir una terminal y navegar a la carpeta donde se encuentra el `Dockerfile`:
 
 ```bash
-cd Taller_MLPop_Docker
+cd team-a-mlops-U2
 ```
 
 ### Paso 2: Construir la imagen de Docker (`docker build`)
