@@ -86,7 +86,10 @@ jobs:
   publicar-imagen:
     name: Desplegar en Docker
     needs: pruebas
-    if: github.event_name == 'push'
+    # En un push a main el job "Inicio pipeline" se omite, y GitHub omitiría
+    # también este job si solo se evaluara el evento. Por eso se revisa
+    # explícitamente que las pruebas hayan pasado.
+    if: ${{ !cancelled() && github.event_name == 'push' && needs.pruebas.result == 'success' }}
     runs-on: ubuntu-latest
     permissions:
       contents: read
