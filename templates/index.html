@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Asistente Clínico ML — Diagnóstico de Pacientes</title>
+    <style>
+        :root {
+            --bg: #f4f7fb;
+            --card: #ffffff;
+            --primary: #1a56db;
+            --primary-hover: #1e40af;
+            --text: #1f2937;
+            --muted: #6b7280;
+            --border: #e5e7eb;
+        }
+        * { box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            margin: 0;
+            padding: 2rem 1rem;
+        }
+        .container {
+            max-width: 720px;
+            margin: 0 auto;
+            background: var(--card);
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+            padding: 2rem;
+            border: 1px solid var(--border);
+        }
+        h1 {
+            margin-top: 0;
+            font-size: 1.55rem;
+            color: #111827;
+        }
+        p.subtitle {
+            color: var(--muted);
+            margin-bottom: 1.5rem;
+            line-height: 1.5;
+        }
+        .presets {
+            background: #f8fafc;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 1.5rem;
+        }
+        .presets-title {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--muted);
+            margin-bottom: 0.6rem;
+            text-transform: uppercase;
+            letter-spacing: 0.03em;
+        }
+        .preset-buttons {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 0.5rem;
+        }
+        .preset-btn {
+            background: #ffffff;
+            border: 1px solid #cbd5e1;
+            border-radius: 6px;
+            padding: 0.5rem 0.65rem;
+            font-size: 0.82rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.15s ease;
+        }
+        .preset-btn:hover {
+            background: #eff6ff;
+            border-color: var(--primary);
+            color: var(--primary);
+        }
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+        @media (max-width: 600px) {
+            .form-grid { grid-template-columns: 1fr; }
+        }
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+        label {
+            font-weight: 600;
+            font-size: 0.9rem;
+            margin-bottom: 0.35rem;
+        }
+        small.hint {
+            color: var(--muted);
+            font-size: 0.78rem;
+            margin-top: 0.25rem;
+        }
+        input, select {
+            padding: 0.65rem 0.75rem;
+            border: 1px solid #cbd5e1;
+            border-radius: 6px;
+            font-size: 0.95rem;
+        }
+        button.submit-btn {
+            margin-top: 1.25rem;
+            width: 100%;
+            background: var(--primary);
+            color: #ffffff;
+            border: none;
+            padding: 0.85rem;
+            font-size: 1rem;
+            font-weight: 600;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background 0.15s ease;
+        }
+        button.submit-btn:hover {
+            background: var(--primary-hover);
+        }
+        .result-box {
+            margin-top: 1.5rem;
+            padding: 1.25rem;
+            border-radius: 8px;
+            border-left: 6px solid var(--primary);
+            background: #f0f9ff;
+        }
+        .result-state {
+            font-size: 1.35rem;
+            font-weight: 800;
+            margin: 0.25rem 0 0.5rem 0;
+        }
+        .error-box {
+            margin-top: 1.5rem;
+            padding: 1rem;
+            border-radius: 8px;
+            background: #fef2f2;
+            border-left: 6px solid #dc2626;
+            color: #991b1b;
+        }
+        .footer-api {
+            margin-top: 1.75rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--border);
+            font-size: 0.85rem;
+            color: var(--muted);
+        }
+        code {
+            background: #f1f5f9;
+            padding: 0.15rem 0.35rem;
+            border-radius: 4px;
+            font-size: 0.82rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Sistema de Evaluación Clínica de Síntomas (MLOps)</h1>
+        <p class="subtitle">
+            Ingrese los parámetros clínicos del paciente para obtener el estado diagnóstico estimado por el modelo contenerizado en Docker.
+        </p>
+
+        <div class="presets">
+            <div class="presets-title">Casos de prueba rápidos (Cargar valores para cada estado):</div>
+            <div class="preset-buttons">
+                <button type="button" class="preset-btn" onclick="cargarCaso(36.6, 1, 1, 0)">1. NO ENFERMO</button>
+                <button type="button" class="preset-btn" onclick="cargarCaso(37.6, 3, 4, 0)">2. ENFERMEDAD LEVE</button>
+                <button type="button" class="preset-btn" onclick="cargarCaso(39.1, 4, 8, 1)">3. ENFERMEDAD AGUDA</button>
+                <button type="button" class="preset-btn" onclick="cargarCaso(37.4, 45, 5, 1)">4. ENFERMEDAD CRÓNICA</button>
+            </div>
+        </div>
+
+        <form method="POST" action="/">
+            <div class="form-grid">
+                <div class="form-group">
+                    <label for="temperatura">1. Temperatura Corporal (°C)</label>
+                    <input type="number" step="0.1" id="temperatura" name="temperatura" value="{{ valores.temperatura }}" required>
+                    <small class="hint">Normal: 36.0 - 37.2 °C | Fiebre alta: &ge; 38.5 °C</small>
+                </div>
+
+                <div class="form-group">
+                    <label for="duracion_dias">2. Duración de Síntomas (Días)</label>
+                    <input type="number" min="0" id="duracion_dias" name="duracion_dias" value="{{ valores.duracion_dias }}" required>
+                    <small class="hint">Agudo/Leve: &lt; 14 días | Crónico: &ge; 30 días</small>
+                </div>
+
+                <div class="form-group">
+                    <label for="severidad_dolor">3. Severidad del Dolor / Malestar (0 - 10)</label>
+                    <input type="number" min="0" max="10" id="severidad_dolor" name="severidad_dolor" value="{{ valores.severidad_dolor }}" required>
+                    <small class="hint">0 = Sin dolor | 1-6 = Leve/Moderado | 7-10 = Severo</small>
+                </div>
+
+                <div class="form-group">
+                    <label for="biomarcador_anormal">4. Biomarcador / Laboratorio Anormal</label>
+                    <select id="biomarcador_anormal" name="biomarcador_anormal">
+                        <option value="0" {% if valores.biomarcador_anormal == "0" %}selected{% endif %}>0 — Normal (Sin hallazgos críticos)</option>
+                        <option value="1" {% if valores.biomarcador_anormal == "1" %}selected{% endif %}>1 — Alterado (Hallazgo clínico anormal)</option>
+                    </select>
+                    <small class="hint">Opcional (4to parámetro de apoyo clínico)</small>
+                </div>
+            </div>
+
+            <button type="submit" class="submit-btn">Evaluar Estado del Paciente</button>
+        </form>
+
+        {% if resultado %}
+        <div class="result-box">
+            <div>Resultado de la Predicción:</div>
+            <div class="result-state">{{ resultado.estado }}</div>
+            <div><strong>Observación Clínica:</strong> {{ resultado.justificacion }}</div>
+        </div>
+        {% endif %}
+
+        {% if error %}
+        <div class="error-box">
+            <strong>Error en los datos:</strong> {{ error }}
+        </div>
+        {% endif %}
+
+        <div class="footer-api">
+            <strong>Endpoint de API disponible:</strong> <code>POST /predecir</code> y <code>GET /predecir</code>
+        </div>
+    </div>
+
+    <script>
+        function cargarCaso(temp, dias, dolor, bio) {
+            document.getElementById('temperatura').value = temp;
+            document.getElementById('duracion_dias').value = dias;
+            document.getElementById('severidad_dolor').value = dolor;
+            document.getElementById('biomarcador_anormal').value = String(bio);
+        }
+    </script>
+</body>
+</html>
