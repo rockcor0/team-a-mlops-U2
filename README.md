@@ -20,9 +20,9 @@ team-a-mlops-U2/
 ├── README.md                # Entregable Punto 2: Documentación de uso, construcción y pruebas
 ├── Dockerfile               # Definición de la imagen personalizada de Docker
 ├── requirements.txt         # Dependencias de Python (Flask)
-├── model.py                 # Función del modelo simulado (retorna los 4 estados clínicos)
+├── model.py                 # Función del modelo simulado (retorna los 5 estados clínicos)
 ├── app.py                   # Servicio Flask con interfaz web (/) y endpoint API (/predecir)
-├── test_servicio.py         # Suite de validación automatizada de los 4 estados y endpoints
+├── test_servicio.py         # Suite de validación automatizada de los 5 estados y endpoints
 └── templates/
     └── index.html           # Página web interactiva para el médico
 ```
@@ -31,12 +31,13 @@ team-a-mlops-U2/
 
 ## 3. Descripción de la Función del Modelo (`model.py`)
 
-La función `predecir_estado_paciente` recibe **mínimo 3 parámetros clínicos** (y un 4.º parámetro opcional de apoyo) y evalúa el cuadro del paciente para retornar exactamente alguno de los **4 estados exigidos**:
+La función `predecir_estado_paciente` recibe **mínimo 3 parámetros clínicos** (y un 4.º parámetro opcional de apoyo) y evalúa el cuadro del paciente para retornar exactamente alguno de los **5 estados exigidos**:
 
 - `NO ENFERMO`
 - `ENFERMEDAD LEVE`
 - `ENFERMEDAD AGUDA`
 - `ENFERMEDAD CRÓNICA`
+- `ENFERMEDAD TERMINAL`
 
 ### Parámetros de entrada
 
@@ -46,6 +47,8 @@ La función `predecir_estado_paciente` recibe **mínimo 3 parámetros clínicos*
 | `duracion_dias` | `int` | Días de evolución de los síntomas. Cuadros $\ge 30$ días (o $\ge 14$ días con biomarcador alterado) indican cronicidad. |
 | `severidad_dolor` | `int` | Escala subjetiva de dolor/malestar de `0` (sin dolor) a `10` (dolor severo $\ge 7$). |
 | `biomarcador_anormal` | `int` *(opcional)* | `0` = Normal (valor por defecto), `1` = Alteración en laboratorio o signo de alarma clínica. |
+
+**Enfermedad terminal:** se predice cuando coinciden una evolución de $\ge 60$ días, dolor muy severo ($\ge 9$) y biomarcador alterado (`1`). Esta regla se evalúa antes que la de enfermedad crónica.
 
 ---
 
@@ -91,14 +94,14 @@ docker ps
 
 ---
 
-## 5. Cómo Obtener Respuestas del Modelo (Los 4 Estados Clínicos)
+## 5. Cómo Obtener Respuestas del Modelo (Los 5 Estados Clínicos)
 
 El servicio ofrece **3 formas** de uso para comodidad del médico o evaluador:
 
 ### Opción A: A través del Navegador Web (Interfaz Gráfica para el Médico)
 1. Abrir en cualquier navegador web:  
    **http://localhost:5000**
-2. Ingresar los valores clínicos del paciente (o pulsar cualquiera de los **4 botones de casos de prueba rápidos** incluidos en la interfaz) y hacer clic en **"Evaluar Estado del Paciente"**.
+2. Ingresar los valores clínicos del paciente (o pulsar cualquiera de los **5 botones de casos de prueba rápidos** incluidos en la interfaz) y hacer clic en **"Evaluar Estado del Paciente"**.
 
 ---
 
@@ -150,6 +153,14 @@ curl -X POST http://localhost:5000/predecir \
 ```
 **Respuesta esperada:** `"estado": "ENFERMEDAD CRÓNICA"`
 
+#### 5. Obtener estado `ENFERMEDAD TERMINAL`
+```bash
+curl -X POST http://localhost:5000/predecir \
+  -H "Content-Type: application/json" \
+  -d '{"temperatura": 37.0, "duracion_dias": 120, "severidad_dolor": 9, "biomarcador_anormal": 1}'
+```
+**Respuesta esperada:** `"estado": "ENFERMEDAD TERMINAL"`
+
 #### Envío alternativo como lista de 3 valores:
 ```bash
 curl -X POST http://localhost:5000/predecir \
@@ -171,6 +182,8 @@ También se puede consultar directamente desde la barra de direcciones del naveg
   `http://localhost:5000/predecir?temperatura=39.1&duracion_dias=4&severidad_dolor=8`
 - **ENFERMEDAD CRÓNICA:**  
   `http://localhost:5000/predecir?temperatura=37.4&duracion_dias=45&severidad_dolor=5`
+- **ENFERMEDAD TERMINAL:**  
+  `http://localhost:5000/predecir?temperatura=37.0&duracion_dias=120&severidad_dolor=9&biomarcador_anormal=1`
 
 ---
 
