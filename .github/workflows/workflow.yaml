@@ -43,7 +43,6 @@ jobs:
   pruebas:
     name: Pruebas unitarias
     needs: comentar-inicio
-    # En un push a main el comentario se omite; las pruebas corren igual.
     if: ${{ !failure() && !cancelled() }}
     runs-on: ubuntu-latest
     steps:
@@ -86,9 +85,6 @@ jobs:
   publicar-imagen:
     name: Desplegar en Docker
     needs: pruebas
-    # En un push a main el job "Inicio pipeline" se omite, y GitHub omitiría
-    # también este job si solo se evaluara el evento. Por eso se revisa
-    # explícitamente que las pruebas hayan pasado.
     if: ${{ !cancelled() && github.event_name == 'push' && needs.pruebas.result == 'success' }}
     runs-on: ubuntu-latest
     permissions:
@@ -108,8 +104,6 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      # Genera el nombre de la imagen en minúsculas (ghcr.io no acepta
-      # mayúsculas) y las etiquetas "latest" y el SHA corto del commit.
       - name: Definir nombre y etiquetas de la imagen
         id: meta
         uses: docker/metadata-action@v5
