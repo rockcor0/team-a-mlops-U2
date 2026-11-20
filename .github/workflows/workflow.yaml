@@ -1,0 +1,125 @@
+# Pipeline de CI/CD del servicio de diagnóstico clínico.
+#
+# Evento (1.): cada PR contra main
+#   - Comenta en el PR que el pipeline comenzó.
+#   - Corre las pruebas unitarias.
+#   - Comenta en el PR que todo terminó con éxito.
+#
+# Evento (2.): cada commit en main (merge de un PR)
+#   - Vuelve a correr las pruebas unitarias.
+#   - Construye la imagen de Docker y la publica en GitHub Packages (ghcr.io).
+
+name: CI/CD
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  comentar-inicio:
+    name: Inicio pipeline
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+      issues: write
+    steps:
+      - name: Comentar "CI/CD en acción"
+        uses: actions/github-script@v7
+        with:
+          script: |
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body: "CI/CD en acción. Ejecutando tareas …",
+            });
+
+  pruebas:
+    name: Pruebas unitarias
+    needs: comentar-inicio
+    # En un push a main el comentario se omite; las pruebas corren igual.
+    if: ${{ !failure() && !cancelled() }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Descargar el código del repositorio
+        uses: actions/checkout@v4
+
+      - name: Configurar Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: requirements-dev.txt
+
+      - name: Instalar dependencias
+        run: pip install -r requirements-dev.txt
+
+      - name: Correr pruebas unitarias
+        run: pytest -v
+
+  comentar-fin:
+    name: Fin pipeline
+    needs: pruebas
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+      issues: write
+    steps:
+      - name: Comentar "CI/CD terminado con éxito"
+        uses: actions/github-script@v7
+        with:
+          script: |
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body: "CI/CD terminado con éxito.",
+            });
+
+  publicar-imagen:
+    name: Desplegar en Docker
+    needs: pruebas
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - name: Descargar el código del repositorio
+        uses: actions/checkout@v4
+
+      - name: Configurar Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Iniciar sesión en GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      # Genera el nombre de la imagen en minúsculas (ghcr.io no acepta
+      # mayúsculas) y las etiquetas "latest" y el SHA corto del commit.
+      - name: Definir nombre y etiquetas de la imagen
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ghcr.io/${{ github.repository }}
+          tags: |
+            type=raw,value=latest
+            type=sha
+
+      - name: Construir y publicar la imagen
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
